@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"runtime"
@@ -27,16 +26,29 @@ func acceptor(conn *net.TCPConn) {
 	// 获取客户端IP地址。
 	var remoteAddr = conn.RemoteAddr()
 	fmt.Println("-> Accept：", remoteAddr)
-	fmt.Println("-> Reading ...")
+	fmt.Println("[", remoteAddr, "] > Reading ...")
+
+	// 定义缓存
+	buffer := make([]byte, 4096)
 
 	for working {
 
 		// 读取内容。
-		var bs, _ = ioutil.ReadAll(conn)
-		fmt.Println("-> Read string：", string(bs))
+		// var bs, err = ioutil.ReadAll(conn)
+		re, err := conn.Read(buffer)
+		if err != nil {
+			fmt.Println("[", remoteAddr, "] > Error：", err)
+			break
+		}
 
-		// 原封不动的返回
-		conn.Write(bs)
+		// 判断数组长度
+		if re > 0 {
+			// 显示字符串
+			fmt.Println("[", remoteAddr, "] > Read string：", string(buffer))
+
+			// 原封不动的返回
+			conn.Write(buffer)
+		}
 
 		// 临时让出控制权
 		runtime.Gosched()
